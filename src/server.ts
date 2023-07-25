@@ -1,7 +1,7 @@
 // server.ts
 import express, { Request, Response, NextFunction } from 'express'
 import swaggerUi from 'swagger-ui-express'
-
+import fs from 'fs'
 import dotenv from 'dotenv'
 dotenv.config()
 
@@ -9,6 +9,8 @@ import middleware from '@/middleware'
 import routes from '@/routes'
 import swaggerDocs from '@/swagger'
 import logger from '@/middleware/logger'
+import parseHARtoSwagger from './utility/harToSwagger'
+import { generateSwaggerYAML } from './utility/generate-swagger-yaml'
 
 const app = express()
 const port = process.env.PORT || 5678
@@ -32,4 +34,17 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
 app.listen(port, async () => {
     logger.info(`Express server listening on port ${port}`)
+
+    try {
+        const swagger = await parseHARtoSwagger('./airbnb.har')
+        fs.writeFileSync('./swagger.json', JSON.stringify(swagger, null, 2))
+
+        const yamlContent = await generateSwaggerYAML('./airbnb.har')
+        fs.writeFileSync('./swagger.yaml', yamlContent, 'utf8')
+
+        logger.info('Swagger documentation generated from HAR file')
+
+    } catch (error) {
+        logger.error(error)
+    }
 })

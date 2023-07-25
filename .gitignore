@@ -38,6 +38,9 @@ yarn.lock
 *.swagger.json
 
 # Typescript files
-*.js
 *.js.map
 .vercel
+
+
+# HAR files because they're massive.
+*.har
