@@ -1,53 +1,81 @@
-Express Server
-==============
+# parseHARtoSwagger
 
-This Express server is a simple server written in TypeScript that makes use of several popular packages to handle HTTP requests. The server is based on the popular [Express](https://expressjs.com/) framework.
+`parseHARtoSwagger` is a tool designed to transform HTTP Archive (HAR) files into OpenAPI (formerly known as Swagger) documentation. By analyzing HAR files, it systematically extracts endpoint data and responses to generate comprehensive OpenAPI documentation.
 
-Features
---------
+## 🛠 Installation
 
-1. **Middleware**: The server makes use of middleware to handle incoming requests. Middleware functions are functions that have access to the request object, the response object, and the next middleware function in the application’s request-response cycle. These functions are used to perform tasks such as authentication, logging, and parsing incoming data.
+Ensure the following prerequisites are installed:
 
-2. **Routing**: The server uses routing to handle different HTTP requests. Routing refers to the definition of endpoints and how they should respond to various HTTP requests. In this server, routing is defined in the `./routes` module.
+- Node.js
+- NPM
 
-3. **Error Handling**: The server has two error handling middleware functions that catch any errors that occur in the application. The first one logs the error to the console and sends a generic error message to the client, while the second one sends a 500 Internal Server Error response to the client.
+To get started, install the required packages using:
 
-4. **Swagger Documentation**: This server integrates [Swagger UI](https://swagger.io/tools/swagger-ui/) for API documentation. Swagger UI is a popular open-source tool for generating and visualizing API documentation. In this server, Swagger UI is used to display the API documentation defined in the `./swagger` module. The documentation is accessible at the `/api-docs` endpoint.
-
-5. **Default Endpoint**: The server has a default endpoint at the root (`/`) that returns a simple message.
-
-6. **Listening Port**: The server listens on port 3000. When the server starts, it logs a message to the console indicating that it is listening on the specified port.
-
-Summary
--------
-
-This Express server is a simple server that makes use of popular packages to handle HTTP requests, including middleware, routing, error handling, API documentation, a default endpoint, and a listening port. It is a great starting point for building more complex applications.
-
-* * *
-
-Getting Started
----------------
-
-To run the server, simply clone the repository, install the dependencies, and run the `npm start` command.
-
-```
-git clone https://github.com/your-repo
-cd your-repo
+```bash
 npm install
-npm start
 ```
 
-The server will start and log a message indicating that it is listening on port 3000. You can access the API documentation at `http://localhost:3000/api-docs`.
+## 🚀 Usage
 
-Dependencies
-------------
+```javascript
+import { parseHARtoSwagger } from 'parseHARtoSwagger';
 
-This server makes use of the following dependencies:
+try {
+    const swagger = await parseHARtoSwagger('./path_to_your_file.har');
+    fs.writeFileSync('./swagger.json', JSON.stringify(swagger, null, 2));
 
-* [Express](https://expressjs.com/): A fast, minimal, and flexible Node.js web framework.
-* [Swagger UI](https://swagger.io/tools/swagger-ui/): An open-source tool for generating and visualizing API documentation.
+    const yamlContent = await generateSwaggerYAML('./twitter.har')
+    fs.writeFileSync('./swagger.yaml', yamlContent, 'utf8')
 
-Contributing
-------------
+    
+    logger.info('Swagger documentation successfully generated from HAR file');
+} catch (error) {
+    logger.error(`Error during Swagger documentation generation: ${error}`);
+}
+```
 
-This project is open to contributions from the community. If you would like to contribute, simply fork the repository, make your changes, and submit a pull request.
+## 📖 How It Works
+
+1. **Load HAR Content**:
+    - Reads the HAR file and converts its content into a JSON format.
+2. **Information Extraction**:
+    - Iterates over each HTTP request/response entry in the HAR file.
+    - Analyzes request specifics such as URL, method, query parameters, headers, and body.
+    - Processes responses labeled with a `content-type` of `application/json`.
+3. **OpenAPI/Swagger Generation**:
+    - Transforms the gathered information into the OpenAPI format, detailing paths, methods, parameters, and responses.
+    - Translates JSON bodies from both requests and responses into JSON Schema.
+4. **Validation**:
+    - Validates the formed OpenAPI structure against the official OpenAPI specification.
+5. **Reporting**:
+    - Constructs a summary report detailing insights into endpoints, utilized methods, and available response codes.
+6. **Resulting Output**:
+    - Outputs the constructed Swagger documentation in a consumable JSON format.
+
+## ⚙️ Internal Functions
+
+- `assignTagsToPaths(paths)`: Labels Swagger paths with tags derived from their URL segment. Utilizes the primary endpoint as its tag reference.
+- `generateJsonSchema(jsonObj)`: Converts a JSON input into its corresponding JSON Schema.
+- `generateArraySchema(jsonArr)`: Formulates a schema for array structures.
+- `generateObjectSchema(jsonObj)`: Creates a schema for object data types.
+- `hasParameter(params, name, location)`: Verifies the existence of a specific parameter within a Swagger path.
+- `generateReport(paths)`: Develops a detailed report on identified endpoints.
+- `validateSwagger(swagger)`: Ensures the produced Swagger document's compliance with the OpenAPI specification.
+
+## 📌 Notes
+
+- Responses are processed only if tagged with a `content-type` of `application/json`.
+- If a parameter or header is identified in a request, the tool assumes its necessity for that specific request method.
+- During the JSON Schema generation process, array-first items are utilized as references, and `null` values are treated as string types to ensure OpenAPI compatibility.
+
+## 🤝 Contribution
+
+We warmly welcome community contributions. Fork this project, submit issues, or contribute directly via pull requests. Your feedback and expertise are invaluable to us.
+
+## 📜 License
+
+Distributed under the MIT License.
+
+---
+
+This version includes enhanced formatting, clarified explanations, and the addition of emojis for a touch of modern style.
