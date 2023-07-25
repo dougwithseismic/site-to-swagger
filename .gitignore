@@ -1,0 +1,43 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+
+# Build artifacts
+dist/
+build/
+
+# Configuration files
+.env
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Test-related files
+coverage/
+*.spec.*
+
+# Node-related files
+.node_env
+.node_repl_history
+
+# yarn-related files
+yarn.lock
+
+# Swagger files
+*.swagger.json
+
+# Typescript files
+*.js
+*.js.map
+.vercel

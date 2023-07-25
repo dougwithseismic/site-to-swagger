@@ -1,0 +1,42 @@
+{
+    "name": "express-be-ts-server-2023-template",
+    "version": "1.0.0",
+    "main": "index.js",
+    "license": "MIT",
+    "scripts": {
+        "build": "node esbuild.config.js",
+        "start:server": "node dist/server.js",
+        "dev:build": "nodemon --watch src --exec npm run build",
+        "dev:server": "nodemon dist/server.js",
+        "dev": "concurrently \"npm run dev:build\" \"npm run dev:server\"",
+        "format": "prettier --write \"src/**/*.ts\""
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.13",
+        "@types/express": "^4.17.17",
+        "@types/swagger-jsdoc": "^6.0.1",
+        "@types/swagger-ui-express": "^4.1.3",
+        "concurrently": "^8.2.0",
+        "esbuild": "^0.18.16",
+        "express": "^4.18.2",
+        "node-fetch": "^3.3.2",
+        "nodemon": "^2.0.20",
+        "prettier": "^2.8.4",
+        "ts-alias": "^0.0.7",
+        "ts-node": "^10.9.1",
+        "tsconfig-paths": "^4.2.0",
+        "typescript": "^4.9.5"
+    },
+    "dependencies": {
+        "axios": "^1.4.0",
+        "body-parser": "^1.20.1",
+        "bullmq": "^3.15.6",
+        "cors": "^2.8.5",
+        "dotenv": "^16.1.4",
+        "express-rate-limit": "^6.7.0",
+        "helmet": "^6.0.1",
+        "swagger-jsdoc": "^6.2.8",
+        "swagger-ui-express": "^4.6.1",
+        "winston": "^3.8.2"
+    }
+}
