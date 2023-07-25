@@ -36,15 +36,15 @@ app.listen(port, async () => {
     logger.info(`Express server listening on port ${port}`)
 
     try {
-        const swagger = await parseHARtoSwagger('./airbnb.har')
+        const swagger = await parseHARtoSwagger('./twitter.har')
         fs.writeFileSync('./swagger.json', JSON.stringify(swagger, null, 2))
 
-        const yamlContent = await generateSwaggerYAML('./airbnb.har')
+        const yamlContent = await generateSwaggerYAML('./twitter.har')
         fs.writeFileSync('./swagger.yaml', yamlContent, 'utf8')
 
         logger.info('Swagger documentation generated from HAR file')
 
     } catch (error) {
-        logger.error(error)
+        logger.error(`Error generating Swagger documentation: ${error}`)
     }
 })

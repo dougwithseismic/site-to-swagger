@@ -13,7 +13,6 @@ type JsonSchema = {
     properties?: Record<string, JsonSchema>
 }
 
-
 async function parseHARtoSwagger(filePath: string): Promise<any> {
     const harContent = JSON.parse(fs.readFileSync(filePath, 'utf8'))
 
@@ -72,7 +71,11 @@ async function parseHARtoSwagger(filePath: string): Promise<any> {
         }
 
         // Request Body (if it's JSON)
-        if (request.postData && request.postData.mimeType === 'application/json') {
+        if (
+            request.postData &&
+            request.postData.mimeType === 'application/json' &&
+            request.postData.text
+        ) {
             try {
                 const requestBody = JSON.parse(request.postData.text)
                 paths[path][method].requestBody = {
@@ -89,15 +92,22 @@ async function parseHARtoSwagger(filePath: string): Promise<any> {
         }
 
         // Response
-        const responseBody = JSON.parse(response.content.text)
-        const responseSchema = generateJsonSchema(responseBody)
-        paths[path][method].responses[response.status] = {
-            description: 'Generated from HAR',
-            content: {
-                'application/json': {
-                    schema: responseSchema,
-                },
-            },
+
+        if (response.content.text) {
+            try {
+                const responseBody = JSON.parse(response.content.text)
+                const responseSchema = generateJsonSchema(responseBody)
+                paths[path][method].responses[response.status] = {
+                    description: 'Generated from HAR',
+                    content: {
+                        'application/json': {
+                            schema: responseSchema,
+                        },
+                    },
+                }
+            } catch (err) {
+                console.error('Error parsing JSON response body from HAR:', err)
+            }
         }
     }
 
