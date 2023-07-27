@@ -10,14 +10,12 @@ import routes from '@/routes'
 import swaggerDocs from '@/swagger'
 import logger from '@/middleware/logger'
 import parseHARtoSwagger from './utility/harToSwagger'
-import { generateSwaggerYAML } from './utility/generate-swagger-yaml'
 
 const app = express()
 const port = process.env.PORT || 5678
 
 app.use(middleware)
 app.use(routes)
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs))
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error(err.stack)
@@ -33,18 +31,20 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 })
 
 app.listen(port, async () => {
-    logger.info(`Express server listening on port ${port}`)
-
     const EXAMPLE_PATH = './examples/example.har'
 
     try {
-        const swagger = await parseHARtoSwagger(EXAMPLE_PATH)
-        fs.writeFileSync('./examples/example.json', JSON.stringify(swagger, null, 2))
+        const swagger = await parseHARtoSwagger(EXAMPLE_PATH) // Can also pass in an array of paths.
 
-        const yamlContent = await generateSwaggerYAML(EXAMPLE_PATH)
-        fs.writeFileSync('./examples/example.yaml', yamlContent, 'utf8')
+        for (const docType of swagger) {
+            const { name, content } = docType
+            fs.writeFileSync(`./examples/${name}`, JSON.stringify(content, null, 2))
+        }
 
         logger.info('Swagger documentation generated from HAR file')
+        logger.info(`Docs available at http://localhost:${port}/docs`)
+
+        app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs))
     } catch (error) {
         logger.error(`Error generating Swagger documentation: ${error}`)
     }

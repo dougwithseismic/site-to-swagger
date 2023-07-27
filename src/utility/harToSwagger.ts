@@ -1,6 +1,7 @@
 import SwaggerParser from '@apidevtools/swagger-parser'
 import logger from '@/middleware/logger'
 import fs from 'fs'
+import yaml from 'js-yaml'
 
 // Base JSON types
 type JsonValue = string | number | boolean | null | JsonObject | JsonArray
@@ -12,20 +13,6 @@ type JsonSchema = {
     type: 'string' | 'number' | 'integer' | 'boolean' | 'object' | 'array' | 'null'
     items?: JsonSchema
     properties?: Record<string, JsonSchema>
-}
-
-const UUID_REGEX = /[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/
-
-// Split the logic of detecting the segment type from the main function.
-
-function loadHarFile(filePath: string): any {
-    try {
-        const harContent = JSON.parse(fs.readFileSync(filePath, 'utf8'))
-        return harContent
-    } catch (error) {
-        logger.error(`Error parsing HAR file: ${error}`)
-        throw new Error(`Error parsing HAR file: ${error}`)
-    }
 }
 
 type Paths = {
@@ -40,18 +27,6 @@ type Paths = {
         }
     }
 }
-
-type ParameterLocation = 'path' | 'query' | 'header'
-
-enum Method {
-    GET = 'get',
-    POST = 'post',
-    PUT = 'put',
-    DELETE = 'delete',
-    PATCH = 'patch',
-    //...
-}
-
 type Entry = {
     request: {
         url: string
@@ -78,44 +53,76 @@ type HARContent = {
     }
 }
 
-async function parseHARtoSwagger(filePath: string): Promise<any> {
-    const harContent: HARContent = loadHarFile(filePath)
-    const { entries } = harContent.log
+type ParameterLocation = 'path' | 'query' | 'header'
+
+enum Method {
+    GET = 'get',
+    POST = 'post',
+    PUT = 'put',
+    DELETE = 'delete',
+    PATCH = 'patch',
+    OPTIONS = 'options',
+    HEAD = 'head',
+}
+
+const UUID_REGEX = /[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/
+
+// Split the logic of detecting the segment type from the main function.
+
+function loadHarFile(filePath: string): any {
+    try {
+        const harContent = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+        return harContent
+    } catch (error) {
+        logger.error(`Error parsing HAR file: ${error}`)
+        throw new Error(`Error parsing HAR file: ${error}`)
+    }
+}
+
+async function parseHARtoSwagger(filePaths: string[] | string): Promise<any> {
+    if (typeof filePaths === 'string') {
+        filePaths = [filePaths]
+    }
 
     const paths: Paths = {}
     const servers: Array<{ url: string }> = []
 
-    for (const entry of entries) {
-        const { request, response } = entry
-        const url = new URL(request.url)
-        let path = url.pathname
+    for (const filePath of filePaths) {
+        const harContent: HARContent = loadHarFile(filePath)
+        const { entries } = harContent.log
 
-        addServerIfNotExists(servers, `${url.protocol}//${url.host}`)
+        for (const entry of entries) {
+            const { request, response } = entry
+            const url = new URL(request.url)
+            let path = url.pathname
 
-        if (response.content.mimeType !== 'application/json') continue // Skip if not a JSON response.
+            addServerIfNotExists(servers, `${url.protocol}//${url.host}`)
 
-        addPathIfNotExists(paths, path)
+            if (response.content.mimeType !== 'application/json') continue // Skip if not a JSON response.
 
-        const method = request.method.toLowerCase() as Method
+            addPathIfNotExists(paths, path)
 
-        const existingMethod = paths[path][method]
-        if (!existingMethod) {
-            paths[path][method] = {
-                parameters: [],
-                responses: {},
-                summary: url.href,
-                // description: url.href,
+            const method = request.method.toLowerCase() as Method
+
+            const existingMethod = paths[path][method]
+            if (!existingMethod) {
+                paths[path][method] = {
+                    parameters: [],
+                    responses: {},
+                    summary: url.href,
+                    // description: url.href,
+                }
             }
+
+            const queryParamPath = convertToQueryParams(path, paths[path][method].parameters) // Convert path segments to query parameters like /api/user/1234 to /api/user/:userId
+
+            path = swapOriginalPathForDynamic(queryParamPath, path, paths)
+
+            handleQueryParams(paths, path, method, request.queryString)
+            handleHeaders(paths, path, method, request.headers)
+            handleRequestBody(paths, path, method, request.postData)
+            handleResponseBody(paths, path, method, response)
         }
-
-        const queryParamPath = convertToQueryParams(path, paths[path][method].parameters) // Convert path segments to query parameters like /api/user/1234 to /api/user/:userId
-
-        path = swapOriginalPathForDynamic(queryParamPath, path, paths)
-
-        handleQueryParams(paths, path, method, request.queryString)
-        handleHeaders(paths, path, method, request.headers)
-        handleRequestBody(paths, path, method, request.postData)
-        handleResponseBody(paths, path, method, response)
     }
 
     assignTagsToPaths(paths)
@@ -123,7 +130,19 @@ async function parseHARtoSwagger(filePath: string): Promise<any> {
     const report = generateReport(paths)
     logger.info(`API Report: ${JSON.stringify(report, null, 2)}`)
 
-    return createSwaggerDocs(paths, servers)
+    const swaggerJSON = createSwaggerDocs(paths, servers)
+    const swaggerYAML = yaml.dump(swaggerJSON)
+
+    return [
+        {
+            name: 'swagger.json',
+            content: swaggerJSON,
+        },
+        {
+            name: 'swagger.yaml',
+            content: swaggerYAML,
+        },
+    ]
 }
 
 function addServerIfNotExists(servers: Array<{ url: string }>, url: string): void {

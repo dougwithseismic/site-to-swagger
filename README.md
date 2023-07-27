@@ -1,6 +1,6 @@
-# parseHARtoSwagger
+# site-to-swagger
 
-`parseHARtoSwagger` is a tool designed to transform HTTP Archive (HAR) files into OpenAPI (formerly known as Swagger) documentation. By analyzing HAR files, it systematically extracts endpoint data and responses to generate comprehensive OpenAPI documentation.
+`site-to-swagger` is a tool designed to transform HTTP Archive (HAR) files into OpenAPI (formerly known as Swagger) documentation. By analyzing HAR files, it systematically extracts endpoint data and responses to generate comprehensive OpenAPI documentation.
 
 ## 🛠 Installation
 
