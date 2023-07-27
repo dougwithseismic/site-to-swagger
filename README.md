@@ -23,9 +23,9 @@ tldr: Open Browser with devtools.
 2. Record your network activity by clicking the Record button or pressing Ctrl + E.
 3. Perform the actions that you want to record.
 4. Download the HAR file
-5. .....
-
-```
+5. Replace the HAR file in `./examples` folder. (Rename as example.har or edit `src/server.ts` to point to your file)
+6. Run `npm start`
+7. Open `http://localhost:5678/docs` in your browser or check `examples/example.json` and `examples/example.yaml` for the generated swagger files.
 
 ## 📖 How It Works
 
@@ -38,22 +38,25 @@ tldr: Open Browser with devtools.
 3. **OpenAPI/Swagger Generation**:
     - Transforms the gathered information into the OpenAPI format, detailing paths, methods, parameters, and responses.
     - Translates JSON bodies from both requests and responses into JSON Schema.
-4. **Validation**:
-    - Validates the formed OpenAPI structure against the official OpenAPI specification.
-5. **Reporting**:
+4. **Reporting**:
     - Constructs a summary report detailing insights into endpoints, utilized methods, and available response codes.
-6. **Resulting Output**:
-    - Outputs the constructed Swagger documentation in a consumable JSON format.
+5. **Resulting Output**:
+    - Outputs the constructed Swagger documentation in a consumable JSON format. And YAML. And makes Swagger docs available at `http://localhost:5678/docs`.
 
-## ⚙️ Internal Functions
+## 💡 Features
 
-- `assignTagsToPaths(paths)`: Labels Swagger paths with tags derived from their URL segment. Utilizes the primary endpoint as its tag reference.
-- `generateJsonSchema(jsonObj)`: Converts a JSON input into its corresponding JSON Schema.
-- `generateArraySchema(jsonArr)`: Formulates a schema for array structures.
-- `generateObjectSchema(jsonObj)`: Creates a schema for object data types.
-- `hasParameter(params, name, location)`: Verifies the existence of a specific parameter within a Swagger path.
-- `generateReport(paths)`: Develops a detailed report on identified endpoints.
-- `validateSwagger(swagger)`: Ensures the produced Swagger document's compliance with the OpenAPI specification.
+1. **Supports Multiple HAR Files**:
+    - The tool can process multiple HAR files at once, combining the results into a single OpenAPI document.
+2. **Supports Multiple HTTP Methods**:
+    - The tool supports all HTTP methods, including `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, and `OPTIONS`.
+3. **Supports Multiple Query Parameters**:
+    - The tool supports multiple query parameters, including those with the same name.
+4. **Tags by Path**:
+    - The tool tags each endpoint by its path, grouping similar endpoints together. It intelligently ignores common path parameters like `/api/v1/*` to make more accurate tags.
+5. **Automatically creates dynamic path parameters**:
+    - The tool automatically creates path parameters for each unique path parameter found in the HAR file by detecting UUIDs, IDs, and other common path parameters. e.g. `/api/v1/users/{userId}`.
+6. **Serves Swagger Documentation**:
+    - The tool serves the generated Swagger documentation at `http://localhost:5678/docs` for easy consumption.
 
 ## 📌 Notes
 
