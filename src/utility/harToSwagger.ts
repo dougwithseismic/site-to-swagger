@@ -32,7 +32,13 @@ function convertToQueryParams(path: string, existingParams: any[]): string {
         // Check for integer pattern (excluding floating point numbers)
         const integerMatched = segment.match(/^\d+$/)
 
-        const matched = uuidMatched || (integerMatched && !segment.includes('.')) ? segment : null
+        // Check for any group of digits (including floating point numbers)
+        const digitsMatched = segment.match(/^\d+(\.\d+)?$/)
+
+        const matched =
+            uuidMatched || digitsMatched || (integerMatched && !segment.includes('.'))
+                ? segment
+                : null
         if (matched) {
             const paramName = i > 0 ? segments[i - 1] + 'Id' : 'param' + i
             segments[i] = `{${paramName}}`
@@ -72,6 +78,7 @@ type Paths = {
             parameters: any[]
             requestBody?: any
             responses: any
+            summary?: string
         }
     }
 }
@@ -83,11 +90,16 @@ async function parseHARtoSwagger(filePath: string): Promise<any> {
     const { entries } = log
 
     const paths: Paths = {}
+    const servers: any = []
 
     for (const entry of entries) {
         const { request, response } = entry
         const url = new URL(request.url)
         let path = url.pathname
+
+        if (!servers.find((s: any) => s.url === `${url.protocol}//${url.host}`)) {
+            servers.push({ url: `${url.protocol}//${url.host}` })
+        }
 
         if (response.content.mimeType !== 'application/json') {
             continue // Skip if not a JSON response.
@@ -103,6 +115,7 @@ async function parseHARtoSwagger(filePath: string): Promise<any> {
             paths[path][method] = {
                 parameters: [],
                 responses: {},
+                summary: url.href,
             }
         }
 
@@ -115,30 +128,35 @@ async function parseHARtoSwagger(filePath: string): Promise<any> {
         }
 
         // Query parameters
-        for (const q of request.queryString) {
-            if (!hasParameter(paths[path][method].parameters, q.name, 'query')) {
-                console.log('path, method :>> ', path, method, q)
-                paths[path][method].parameters.push({
-                    name: q.name,
-                    in: 'query',
-                    required: true,
-                    schema: { type: 'string', default: q.value }, // Add default value here
-                })
+
+        if (request.queryString) {
+            for (const q of request.queryString) {
+                if (!hasParameter(paths[path][method].parameters, q.name, 'query')) {
+                    console.log('path, method :>> ', path, method, q)
+                    paths[path][method].parameters.push({
+                        name: q.name,
+                        in: 'query',
+                        required: true,
+                        schema: { type: 'string', default: q.value }, // Add default value here
+                    })
+                }
             }
         }
 
         // Headers
-        for (const h of request.headers) {
-            if (
-                h.name.toLowerCase() !== 'host' &&
-                !hasParameter(paths[path][method].parameters, h.name, 'header')
-            ) {
-                paths[path][method].parameters.push({
-                    name: h.name,
-                    in: 'header',
-                    required: true,
-                    schema: { type: 'string', default: h.value }, // Add default value here
-                })
+        if (request.headers) {
+            for (const h of request.headers) {
+                if (
+                    h.name.toLowerCase() !== 'host' &&
+                    !hasParameter(paths[path][method].parameters, h.name, 'header')
+                ) {
+                    paths[path][method].parameters.push({
+                        name: h.name,
+                        in: 'header',
+                        required: true,
+                        schema: { type: 'string', default: h.value }, // Add default value here
+                    })
+                }
             }
         }
 
@@ -197,21 +215,69 @@ async function parseHARtoSwagger(filePath: string): Promise<any> {
     const swaggerDocs = {
         openapi: '3.0.0',
         info: {
-            title: 'Generated from HAR',
+            title: 'Reverse Any Frontendw API with site-to-swagger - Example Docs',
             version: '1.0.0',
+            description:
+                'Automatically generate OpenAPI (Swagger) documentation from HTTP Archive (HAR) files. This tool extracts endpoint data and responses from HAR files to produce comprehensive OpenAPI documentation for reverse hackery. It supports parsing of requests, responses, JSON body translations, and more.',
+            contact: {
+                name: 'Dougie Silkstone',
+                email: 'doug@withseismic.com',
+                url: 'https://www.withseismic.com',
+                'x-twitter': '@dougiesilkstone',
+            },
+            license: {
+                name: 'Custom License',
+                url: 'https://www.withseismic.com/license',
+            },
         },
+        externalDocs: {
+            description: 'Github Example Link',
+            url: 'https://github.com/dougwithseismic/site-to-swagger',
+        },
+        servers: servers,
+
         paths: paths,
     }
 
     return swaggerDocs
 }
 
-function assignTagsToPaths(paths: any): void {
-    for (const path in paths) {
-        const segments = path.split('/').filter(Boolean) // filtering out empty segments
-        if (segments.length === 0) continue
+function getMostCommonSegment(paths: any): string {
+    const segmentCounts: Record<string, number> = {}
 
-        const tag = segments[0] // Use the base endpoint as the tag
+    for (const path in paths) {
+        const segments = path.split('/').filter(Boolean)
+
+        for (const segment of segments) {
+            if (segmentCounts[segment]) {
+                segmentCounts[segment]++
+            } else {
+                segmentCounts[segment] = 1
+            }
+        }
+    }
+
+    let mostCommonSegment = ''
+    let maxCount = 0
+
+    for (const segment in segmentCounts) {
+        if (segmentCounts[segment] > maxCount) {
+            mostCommonSegment = segment
+            maxCount = segmentCounts[segment]
+        }
+    }
+
+    return mostCommonSegment
+}
+
+function assignTagsToPaths(paths: any): void {
+    const mostCommonSegment = getMostCommonSegment(paths)
+
+    for (const path in paths) {
+        const segments = path.split('/').filter(Boolean)
+
+        let tagIndex = segments.indexOf(mostCommonSegment) + 1
+        let tag = segments[tagIndex] || 'Miscellaneous'
 
         for (const method in paths[path]) {
             if (!paths[path][method].tags) {
@@ -221,7 +287,6 @@ function assignTagsToPaths(paths: any): void {
         }
     }
 }
-
 /**
  * Generates a JSON schema for the given JSON value.
  * @param jsonObj The JSON value to generate a schema for.

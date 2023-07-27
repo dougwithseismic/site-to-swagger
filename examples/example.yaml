@@ -1,0 +1,231 @@
+openapi: 3.0.0
+info:
+  title: Reverse Any Frontendw API with site-to-swagger - Example Docs
+  version: 1.0.0
+  description: >-
+    Automatically generate OpenAPI (Swagger) documentation from HTTP Archive
+    (HAR) files. This tool extracts endpoint data and responses from HAR files
+    to produce comprehensive OpenAPI documentation for reverse hackery. It
+    supports parsing of requests, responses, JSON body translations, and more.
+  contact:
+    name: Dougie Silkstone
+    email: doug@withseismic.com
+    url: https://www.withseismic.com
+    x-twitter: '@dougiesilkstone'
+  license:
+    name: Custom License
+    url: https://www.withseismic.com/license
+externalDocs:
+  description: Github Example Link
+  url: https://github.com/dougwithseismic/site-to-swagger
+servers:
+  - url: http://example.com
+paths:
+  /api/users:
+    post:
+      parameters:
+        - name: create
+          in: query
+          required: true
+          schema:
+            type: string
+            default: 'true'
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            default: application/json
+        - name: User-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+            default: Mozilla/5.0
+      responses:
+        '201':
+          description: Generated from HAR
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+      summary: http://example.com/api/users?create=true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+            example:
+              name: John Doe
+              email: john.doe@example.com
+      tags:
+        - users
+  /api/users/{usersId}:
+    put:
+      parameters:
+        - name: usersId
+          in: path
+          required: true
+          schema:
+            type: integer
+            default: '1'
+        - name: update
+          in: query
+          required: true
+          schema:
+            type: string
+            default: name
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            default: application/json
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+            default: Bearer token12345
+      responses:
+        '200':
+          description: Generated from HAR
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+      summary: http://example.com/api/users/12345?update=name
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+            example:
+              name: Jane Doe
+              email: jane.doe@example.com
+      tags:
+        - users
+  /api/products:
+    post:
+      parameters:
+        - name: create
+          in: query
+          required: true
+          schema:
+            type: string
+            default: 'true'
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            default: application/json
+      responses:
+        '201':
+          description: Generated from HAR
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  productId:
+                    type: string
+                  productName:
+                    type: string
+                  description:
+                    type: string
+                  price:
+                    type: number
+      summary: http://example.com/api/products?create=true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productName:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+            example:
+              productName: New Product
+              description: This is a new product
+              price: 19.99
+      tags:
+        - products
+  /api/products/{productsId}:
+    put:
+      parameters:
+        - name: productsId
+          in: path
+          required: true
+          schema:
+            type: integer
+            default: '9'
+        - name: update
+          in: query
+          required: true
+          schema:
+            type: string
+            default: price
+        - name: Content-Type
+          in: header
+          required: true
+          schema:
+            type: string
+            default: application/json
+      responses:
+        '200':
+          description: Generated from HAR
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  productId:
+                    type: string
+                  productName:
+                    type: string
+                  description:
+                    type: string
+                  price:
+                    type: number
+      summary: http://example.com/api/products/98765?update=price
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                price:
+                  type: number
+            example:
+              price: 24.99
+      tags:
+        - products

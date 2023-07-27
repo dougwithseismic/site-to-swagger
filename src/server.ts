@@ -35,15 +35,16 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 app.listen(port, async () => {
     logger.info(`Express server listening on port ${port}`)
 
-    try {
-        const swagger = await parseHARtoSwagger('./shop.silpo.ua.har')
-        fs.writeFileSync('./swagger.json', JSON.stringify(swagger, null, 2))
+    const EXAMPLE_PATH = './examples/example.har'
 
-        const yamlContent = await generateSwaggerYAML('./shop.silpo.ua.har')
-        fs.writeFileSync('./swagger.yaml', yamlContent, 'utf8')
+    try {
+        const swagger = await parseHARtoSwagger(EXAMPLE_PATH)
+        fs.writeFileSync('./examples/example.json', JSON.stringify(swagger, null, 2))
+
+        const yamlContent = await generateSwaggerYAML(EXAMPLE_PATH)
+        fs.writeFileSync('./examples/example.yaml', yamlContent, 'utf8')
 
         logger.info('Swagger documentation generated from HAR file')
-
     } catch (error) {
         logger.error(`Error generating Swagger documentation: ${error}`)
     }
