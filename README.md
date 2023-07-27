@@ -26,6 +26,8 @@ tldr: Open Browser with devtools.
 5. Replace the HAR file in `./examples` folder. (Rename as example.har or edit `src/server.ts` to point to your file)
 6. Run `npm start`
 7. Open `http://localhost:5678/docs` in your browser or check `examples/example.json` and `examples/example.yaml` for the generated swagger files.
+8. BONUS CONTENT - GENERATE CLIENTS AND SERVERS WITH `https://editor-next.swagger.io/`
+Paste the contents of `examples/example.yaml` into the editor and generate clients and servers for your favorite language
 
 ## 📖 How It Works
 
@@ -42,6 +44,8 @@ tldr: Open Browser with devtools.
     - Constructs a summary report detailing insights into endpoints, utilized methods, and available response codes.
 5. **Resulting Output**:
     - Outputs the constructed Swagger documentation in a consumable JSON format. And YAML. And makes Swagger docs available at `http://localhost:5678/docs`.
+
+    ![editor-next.swagger.io](image.png)
 
 ## 💡 Features
 
