@@ -45,7 +45,7 @@ Paste the contents of `examples/example.yaml` into the editor and generate clien
 5. **Resulting Output**:
     - Outputs the constructed Swagger documentation in a consumable JSON format. And YAML. And makes Swagger docs available at `http://localhost:5678/docs`.
 
-    ![editor-next.swagger.io](image.png)
+    ![editor-next.swagger.io](/image.png)
 
 ## 💡 Features
 
