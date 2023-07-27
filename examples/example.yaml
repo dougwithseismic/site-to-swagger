@@ -27,49 +27,35 @@ paths:
         - name: create
           in: query
           required: true
+          example: 'true'
           schema:
             type: string
-            default: 'true'
         - name: Content-Type
           in: header
           required: true
+          example: application/json
           schema:
             type: string
-            default: application/json
         - name: User-Agent
           in: header
           required: true
+          example: Mozilla/5.0
           schema:
             type: string
-            default: Mozilla/5.0
       responses:
         '201':
-          description: Generated from HAR
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  id:
-                    type: string
-                  name:
-                    type: string
-                  email:
-                    type: string
+              example: '{"id":"12345","name":"John Doe","email":"john.doe@example.com"}'
       summary: http://example.com/api/users?create=true
       requestBody:
         content:
           application/json:
             schema:
               type: object
-              properties:
-                name:
-                  type: string
-                email:
-                  type: string
-            example:
-              name: John Doe
-              email: john.doe@example.com
+            example: '{"name":"John Doe","email":"john.doe@example.com"}'
       tags:
         - users
   /api/users/{usersId}:
@@ -84,49 +70,35 @@ paths:
         - name: update
           in: query
           required: true
+          example: name
           schema:
             type: string
-            default: name
         - name: Content-Type
           in: header
           required: true
+          example: application/json
           schema:
             type: string
-            default: application/json
         - name: Authorization
           in: header
           required: true
+          example: Bearer token12345
           schema:
             type: string
-            default: Bearer token12345
       responses:
         '200':
-          description: Generated from HAR
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  id:
-                    type: string
-                  name:
-                    type: string
-                  email:
-                    type: string
+              example: '{"id":"12345","name":"Jane Doe","email":"jane.doe@example.com"}'
       summary: http://example.com/api/users/12345?update=name
       requestBody:
         content:
           application/json:
             schema:
               type: object
-              properties:
-                name:
-                  type: string
-                email:
-                  type: string
-            example:
-              name: Jane Doe
-              email: jane.doe@example.com
+            example: '{"name":"Jane Doe","email":"jane.doe@example.com"}'
       tags:
         - users
   /api/products:
@@ -135,48 +107,33 @@ paths:
         - name: create
           in: query
           required: true
+          example: 'true'
           schema:
             type: string
-            default: 'true'
         - name: Content-Type
           in: header
           required: true
+          example: application/json
           schema:
             type: string
-            default: application/json
       responses:
         '201':
-          description: Generated from HAR
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  productId:
-                    type: string
-                  productName:
-                    type: string
-                  description:
-                    type: string
-                  price:
-                    type: number
+              example: >-
+                {"productId":"98765","productName":"New
+                Product","description":"This is a new product","price":19.99}
       summary: http://example.com/api/products?create=true
       requestBody:
         content:
           application/json:
             schema:
               type: object
-              properties:
-                productName:
-                  type: string
-                description:
-                  type: string
-                price:
-                  type: number
-            example:
-              productName: New Product
-              description: This is a new product
-              price: 19.99
+            example: >-
+              {"productName":"New Product","description":"This is a new
+              product","price":19.99}
       tags:
         - products
   /api/products/{productsId}:
@@ -191,41 +148,30 @@ paths:
         - name: update
           in: query
           required: true
+          example: price
           schema:
             type: string
-            default: price
         - name: Content-Type
           in: header
           required: true
+          example: application/json
           schema:
             type: string
-            default: application/json
       responses:
         '200':
-          description: Generated from HAR
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  productId:
-                    type: string
-                  productName:
-                    type: string
-                  description:
-                    type: string
-                  price:
-                    type: number
+              example: >-
+                {"productId":"98765","productName":"New
+                Product","description":"This is a new product","price":24.99}
       summary: http://example.com/api/products/98765?update=price
       requestBody:
         content:
           application/json:
             schema:
               type: object
-              properties:
-                price:
-                  type: number
-            example:
-              price: 24.99
+            example: '{"price":24.99}'
       tags:
         - products
