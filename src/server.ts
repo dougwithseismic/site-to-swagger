@@ -36,10 +36,10 @@ app.listen(port, async () => {
     logger.info(`Express server listening on port ${port}`)
 
     try {
-        const swagger = await parseHARtoSwagger('./twitter.har')
+        const swagger = await parseHARtoSwagger('./shop.silpo.ua.har')
         fs.writeFileSync('./swagger.json', JSON.stringify(swagger, null, 2))
 
-        const yamlContent = await generateSwaggerYAML('./twitter.har')
+        const yamlContent = await generateSwaggerYAML('./shop.silpo.ua.har')
         fs.writeFileSync('./swagger.yaml', yamlContent, 'utf8')
 
         logger.info('Swagger documentation generated from HAR file')

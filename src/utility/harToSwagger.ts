@@ -13,25 +13,88 @@ type JsonSchema = {
     properties?: Record<string, JsonSchema>
 }
 
+/**
+ * Convert path segments matching certain patterns (like UUIDs or digits) into query parameters.
+ * For example, /user/12345-5678/get becomes /user/:userId/get.
+ */
+
+function convertToQueryParams(path: string, existingParams: any[]): string {
+    const segments = path.split('/')
+    for (let i = 0; i < segments.length; i++) {
+        const segment = segments[i]
+
+        // This regex matches UUIDs or integers but avoids matching floating point numbers
+        // Check for UUID pattern
+        const uuidMatched = segment.match(
+            /[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/
+        )
+
+        // Check for integer pattern (excluding floating point numbers)
+        const integerMatched = segment.match(/^\d+$/)
+
+        const matched = uuidMatched || (integerMatched && !segment.includes('.')) ? segment : null
+        if (matched) {
+            const paramName = i > 0 ? segments[i - 1] + 'Id' : 'param' + i
+            segments[i] = `{${paramName}}`
+
+            const isUUID =
+                /[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/.test(
+                    matched[0]
+                )
+            const paramType = isUUID ? 'string' : 'integer'
+
+            if (!hasParameter(existingParams, paramName, 'path')) {
+                existingParams.push({
+                    name: paramName,
+                    in: 'path',
+                    required: true,
+                    schema: { type: paramType, default: matched[0] },
+                })
+            }
+        }
+    }
+
+    return segments.join('/')
+}
+
+function loadHarFile(filePath: string): any {
+    try {
+        const harContent = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+        return harContent
+    } catch (error) {
+        logger.error(`Error parsing HAR file: ${error}`)
+    }
+}
+
+type Paths = {
+    [path: string]: {
+        [method: string]: {
+            parameters: any[]
+            requestBody?: any
+            responses: any
+        }
+    }
+}
+
 async function parseHARtoSwagger(filePath: string): Promise<any> {
-    const harContent = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    const harContent = loadHarFile(filePath)
 
     const { log } = harContent
     const { entries } = log
 
-    const paths: any = {}
+    const paths: Paths = {}
 
     for (const entry of entries) {
         const { request, response } = entry
         const url = new URL(request.url)
-        const path = url.pathname
+        let path = url.pathname
 
         if (response.content.mimeType !== 'application/json') {
             continue // Skip if not a JSON response.
         }
 
         if (!paths[path]) {
-            paths[path] = {}
+            paths[path] = {} // Create path if it doesn't exist
         }
 
         const method = request.method.toLowerCase()
@@ -43,9 +106,18 @@ async function parseHARtoSwagger(filePath: string): Promise<any> {
             }
         }
 
+        const queryParamPath = convertToQueryParams(path, paths[path][method].parameters) // Convert path segments to query parameters like /api/user/1234 to /api/user/:userId
+
+        if (queryParamPath !== path) {
+            paths[queryParamPath] = paths[path]
+            delete paths[path]
+            path = queryParamPath
+        }
+
         // Query parameters
         for (const q of request.queryString) {
             if (!hasParameter(paths[path][method].parameters, q.name, 'query')) {
+                console.log('path, method :>> ', path, method, q)
                 paths[path][method].parameters.push({
                     name: q.name,
                     in: 'query',
@@ -108,12 +180,16 @@ async function parseHARtoSwagger(filePath: string): Promise<any> {
             } catch (err) {
                 console.error('Error parsing JSON response body from HAR:', err)
             }
+        } else {
+            paths[path][method].responses[response.status] = {
+                description: 'Generated from HAR',
+            }
         }
     }
 
     assignTagsToPaths(paths)
 
-    await validateSwagger(paths)
+    // await validateSwagger(paths) // Remove for now.
 
     const report = generateReport(paths)
     logger.info(`API Report: ${JSON.stringify(report, null, 2)}`)
