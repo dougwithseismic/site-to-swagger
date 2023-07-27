@@ -1,22 +1,21 @@
 openapi: 3.0.0
 info:
-  title: Reverse Any Frontendw API with site-to-swagger - Example Docs
+  title: Reverse Any Frontend API with site-to-swagger - Example Docs
   version: 1.0.0
   description: >-
     Automatically generate OpenAPI (Swagger) documentation from HTTP Archive
-    (HAR) files. This tool extracts endpoint data and responses from HAR files
-    to produce comprehensive OpenAPI documentation for reverse hackery. It
-    supports parsing of requests, responses, JSON body translations, and more.
+    (HAR) files. Learn how at
+    https://github.com/dougwithseismic/site-to-swagger.  This tool extracts
+    endpoint data and responses from HAR files to produce comprehensive OpenAPI
+    documentation for reverse hackery. It supports parsing of requests,
+    responses, JSON body translations, and more.
   contact:
     name: Dougie Silkstone
     email: doug@withseismic.com
     url: https://www.withseismic.com
     x-twitter: '@dougiesilkstone'
-  license:
-    name: Custom License
-    url: https://www.withseismic.com/license
 externalDocs:
-  description: Github Example Link
+  description: Site-to-Swagger GitHub Repo
   url: https://github.com/dougwithseismic/site-to-swagger
 servers:
   - url: http://example.com
@@ -44,6 +43,9 @@ paths:
             type: string
       responses:
         '201':
+          description: >-
+            Created: {"id":"12345","name":"John
+            Doe","email":"john.doe@example.com"}
           content:
             application/json:
               schema:
@@ -66,7 +68,7 @@ paths:
           required: true
           schema:
             type: integer
-            default: '1'
+            default: '12345'
         - name: update
           in: query
           required: true
@@ -87,6 +89,7 @@ paths:
             type: string
       responses:
         '200':
+          description: 'OK: {"id":"12345","name":"Jane Doe","email":"jane.doe@example.com"}'
           content:
             application/json:
               schema:
@@ -118,6 +121,9 @@ paths:
             type: string
       responses:
         '201':
+          description: >-
+            Created: {"productId":"98765","productName":"New
+            Product","description":"This is a new product","price":19.99}
           content:
             application/json:
               schema:
@@ -144,7 +150,7 @@ paths:
           required: true
           schema:
             type: integer
-            default: '9'
+            default: '98765'
         - name: update
           in: query
           required: true
@@ -159,6 +165,9 @@ paths:
             type: string
       responses:
         '200':
+          description: >-
+            OK: {"productId":"98765","productName":"New
+            Product","description":"This is a new product","price":24.99}
           content:
             application/json:
               schema:

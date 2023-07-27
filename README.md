@@ -15,23 +15,16 @@ To get started, install the required packages using:
 npm install
 ```
 
-## 🚀 Usage
+## 🚀 How To - Coming Soon
 
-```javascript
-import { parseHARtoSwagger } from 'parseHARtoSwagger';
+tldr: Open Browser with devtools.
 
-try {
-    const swagger = await parseHARtoSwagger('./path_to_your_file.har');
-    fs.writeFileSync('./swagger.json', JSON.stringify(swagger, null, 2));
+1. Open the Network tab in the DevTools
+2. Record your network activity by clicking the Record button or pressing Ctrl + E.
+3. Perform the actions that you want to record.
+4. Download the HAR file
+5. .....
 
-    const yamlContent = await generateSwaggerYAML('./twitter.har')
-    fs.writeFileSync('./swagger.yaml', yamlContent, 'utf8')
-
-    
-    logger.info('Swagger documentation successfully generated from HAR file');
-} catch (error) {
-    logger.error(`Error during Swagger documentation generation: ${error}`);
-}
 ```
 
 ## 📖 How It Works

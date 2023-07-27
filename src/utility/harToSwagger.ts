@@ -17,19 +17,6 @@ type JsonSchema = {
 const UUID_REGEX = /[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/
 
 // Split the logic of detecting the segment type from the main function.
-function detectSegmentType(segment: string): {
-    type: 'uuid' | 'integer' | 'float' | 'none'
-    value: string
-} {
-    if (UUID_REGEX.test(segment)) {
-        return { type: 'uuid', value: segment }
-    } else if (/^\d+$/.test(segment)) {
-        return { type: 'integer', value: segment }
-    } else if (/^\d+(\.\d+)?$/.test(segment)) {
-        return { type: 'float', value: segment }
-    }
-    return { type: 'none', value: segment }
-}
 
 function loadHarFile(filePath: string): any {
     try {
@@ -37,6 +24,7 @@ function loadHarFile(filePath: string): any {
         return harContent
     } catch (error) {
         logger.error(`Error parsing HAR file: ${error}`)
+        throw new Error(`Error parsing HAR file: ${error}`)
     }
 }
 
@@ -47,6 +35,7 @@ type Paths = {
             requestBody?: any
             responses: any
             summary?: string
+            description?: string
             tags?: string[]
         }
     }
@@ -54,12 +43,19 @@ type Paths = {
 
 type ParameterLocation = 'path' | 'query' | 'header'
 
-type Method = 'get' | 'post' | 'put' | 'delete' | 'patch'
+enum Method {
+    GET = 'get',
+    POST = 'post',
+    PUT = 'put',
+    DELETE = 'delete',
+    PATCH = 'patch',
+    //...
+}
 
 type Entry = {
     request: {
         url: string
-        method: string
+        method: Method
         queryString?: Array<{ name: string; value: string }>
         headers?: Array<{ name: string; value: string }>
         postData?: {
@@ -108,9 +104,9 @@ async function parseHARtoSwagger(filePath: string): Promise<any> {
                 parameters: [],
                 responses: {},
                 summary: url.href,
+                // description: url.href,
             }
         }
-        // path = convertToQueryParams(path, paths[path][method].parameters)
 
         const queryParamPath = convertToQueryParams(path, paths[path][method].parameters) // Convert path segments to query parameters like /api/user/1234 to /api/user/:userId
 
@@ -209,6 +205,36 @@ function handleRequestBody(
     }
 }
 
+function createResponseDescription(response: {
+    content: { mimeType: string; text?: string }
+    status: number
+}): string {
+    const { content, status } = response
+    const { mimeType, text } = content
+
+    switch (status) {
+        case 200:
+            return `OK: ${text}`
+        case 201:
+            return `Created: ${text}`
+        case 204:
+            return `No Content: ${text}`
+        case 400:
+            return `Bad Request: ${text}`
+        case 401:
+            return `Unauthorized: ${text}`
+        case 403:
+            return `Forbidden: ${text}`
+        case 404:
+            return `Not Found: ${text}`
+        case 500:
+            return `Internal Server Error: ${text}`
+
+        default:
+            return `Status ${status}: ${text}`
+    }
+}
+
 function handleResponseBody(
     paths: Paths,
     path: string,
@@ -216,6 +242,7 @@ function handleResponseBody(
     response: { content: { mimeType: string; text?: string }; status: number }
 ): void {
     const responseContent = {
+        description: createResponseDescription(response),
         content: {
             [response.content.mimeType]: {
                 schema: { type: 'object' }, // Again, you might need a better way to infer the schema.
@@ -230,39 +257,20 @@ function convertToQueryParams(path: string, existingParams: any[]): string {
     const segments = path.split('/')
     for (let i = 0; i < segments.length; i++) {
         const segment = segments[i]
+        const { type, value } = detectSegmentType(segment)
 
-        // This regex matches UUIDs or integers but avoids matching floating point numbers
-        // Check for UUID pattern
-        const uuidMatched = segment.match(
-            /[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/
-        )
-
-        // Check for integer pattern (excluding floating point numbers)
-        const integerMatched = segment.match(/^\d+$/)
-
-        // Check for any group of digits (including floating point numbers)
-        const digitsMatched = segment.match(/^\d+(\.\d+)?$/)
-
-        const matched =
-            uuidMatched || digitsMatched || (integerMatched && !segment.includes('.'))
-                ? segment
-                : null
-        if (matched) {
+        if (type !== 'none') {
             const paramName = i > 0 ? segments[i - 1] + 'Id' : 'param' + i
             segments[i] = `{${paramName}}`
 
-            const isUUID =
-                /[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/.test(
-                    matched[0]
-                )
-            const paramType = isUUID ? 'string' : 'integer'
+            const paramType = type === 'uuid' ? 'string' : type
 
             if (!hasParameter(existingParams, paramName, 'path')) {
                 existingParams.push({
                     name: paramName,
                     in: 'path',
                     required: true,
-                    schema: { type: paramType, default: matched[0] },
+                    schema: { type: paramType, default: value },
                 })
             }
         }
@@ -270,22 +278,38 @@ function convertToQueryParams(path: string, existingParams: any[]): string {
 
     return segments.join('/')
 }
+
+function detectSegmentType(segment: string): {
+    type: 'uuid' | 'integer' | 'float' | 'none'
+    value: string
+} {
+    if (UUID_REGEX.test(segment)) {
+        return { type: 'uuid', value: segment }
+    } else if (/^\d+$/.test(segment)) {
+        return { type: 'integer', value: segment }
+    } else if (/^\d+(\.\d+)?$/.test(segment)) {
+        return { type: 'float', value: segment }
+    }
+    return { type: 'none', value: segment }
+}
+
 function assignTagsToPaths(paths: Paths): void {
+    const mostCommonSegment = getMostCommonSegment(paths)
+
     for (const path in paths) {
         for (const method in paths[path]) {
-            const tags = extractTagsFromPath(path, paths)
+            const tags = extractTagsFromPath(path, paths, mostCommonSegment)
             paths[path][method].tags = tags
         }
     }
 }
 
-function extractTagsFromPath(path: string, paths: Paths) {
-    const mostCommonSegment = getMostCommonSegment(paths)
-
+function extractTagsFromPath(path: string, paths: Paths, mostCommonSegment: string) {
+    const DEFAULT_TAG_NAME = 'Misc'
     const segments = path.split('/').filter(Boolean)
 
     let tagIndex = segments.indexOf(mostCommonSegment) + 1
-    let tag = segments[tagIndex] || 'Miscellaneous'
+    let tag = segments[tagIndex] || DEFAULT_TAG_NAME
 
     return [tag]
 }
@@ -445,23 +469,19 @@ function createSwaggerDocs(paths: Paths, servers: Array<{ url: string }>): objec
     return {
         openapi: '3.0.0',
         info: {
-            title: 'Reverse Any Frontendw API with site-to-swagger - Example Docs',
+            title: 'Reverse Any Frontend API with site-to-swagger - Example Docs',
             version: '1.0.0',
             description:
-                'Automatically generate OpenAPI (Swagger) documentation from HTTP Archive (HAR) files. This tool extracts endpoint data and responses from HAR files to produce comprehensive OpenAPI documentation for reverse hackery. It supports parsing of requests, responses, JSON body translations, and more.',
+                'Automatically generate OpenAPI (Swagger) documentation from HTTP Archive (HAR) files. Learn how at https://github.com/dougwithseismic/site-to-swagger.  This tool extracts endpoint data and responses from HAR files to produce comprehensive OpenAPI documentation for reverse hackery. It supports parsing of requests, responses, JSON body translations, and more.',
             contact: {
                 name: 'Dougie Silkstone',
                 email: 'doug@withseismic.com',
                 url: 'https://www.withseismic.com',
                 'x-twitter': '@dougiesilkstone',
             },
-            license: {
-                name: 'Custom License',
-                url: 'https://www.withseismic.com/license',
-            },
         },
         externalDocs: {
-            description: 'Github Example Link',
+            description: 'Site-to-Swagger GitHub Repo',
             url: 'https://github.com/dougwithseismic/site-to-swagger',
         },
         servers: servers,

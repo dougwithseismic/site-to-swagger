@@ -17,7 +17,7 @@ const port = process.env.PORT || 5678
 
 app.use(middleware)
 app.use(routes)
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs))
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs))
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error(err.stack)
