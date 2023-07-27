@@ -1,6 +1,10 @@
-# site-to-swagger
+# site-to-swagger - Reverse any frontend into Swagger Docs
 
-`site-to-swagger` is a tool designed to transform HTTP Archive (HAR) files into OpenAPI (formerly known as Swagger) documentation. By analyzing HAR files, it systematically extracts endpoint data and responses to generate comprehensive OpenAPI documentation.
+## What is this?
+
+If you're like me and enjoy poking around the network tab of your browser, you've probably noticed that most modern web applications communicate with their backend via HTTP requests. These requests are often made to RESTful endpoints, which are typically well-documented and easy to understand.
+
+However, there are times when you may need to reverse engineer a frontend application to understand its API. This is where site-to-swagger comes in handy. It's a tool that can transform HTTP Archive (HAR) files into OpenAPI (formerly known as Swagger) documentation. By analyzing HAR files, it systematically extracts endpoint data and responses to generate comprehensive OpenAPI documentation.
 
 ## 🛠 Installation
 
